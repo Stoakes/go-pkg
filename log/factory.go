@@ -17,7 +17,6 @@ package log
 import (
 	"context"
 
-	opentracing "github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -45,13 +44,9 @@ func (b factory) Bg() Logger {
 	return &logger{logger: b.logger}
 }
 
-// For returns a context-aware Logger. If the context
-// contains an OpenTracing span, all logging calls are also
-// echo-ed into the span.
+// For returns a context-aware Logger.
+// TODO: opencensus support
 func (b factory) For(ctx context.Context) Logger {
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		return &spanLogger{span: span, logger: b.logger}
-	}
 	return b.Bg()
 }
 

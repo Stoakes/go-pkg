@@ -28,8 +28,6 @@ import (
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"github.com/mongodb/mongo-go-driver/mongo/options"
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/pkg/errors"
 
 	"go.zenithar.org/pkg/db"
@@ -78,13 +76,6 @@ func (d *Default) GetSession() interface{} {
 
 // Insert inserts a document into the database
 func (d *Default) Insert(ctx context.Context, data interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		_, err := d.session.Database(d.db).Collection(d.table).InsertOne(ctx, data)
@@ -94,13 +85,6 @@ func (d *Default) Insert(ctx context.Context, data interface{}) error {
 
 // InsertOrUpdate inserts or update document if exists
 func (d *Default) InsertOrUpdate(ctx context.Context, id interface{}, data interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		_, err := d.session.Database(d.db).Collection(d.table).UpdateOne(ctx, id, data)
@@ -110,13 +94,6 @@ func (d *Default) InsertOrUpdate(ctx context.Context, id interface{}, data inter
 
 // Update performs an update on an existing resource according to passed data
 func (d *Default) Update(ctx context.Context, selector interface{}, data interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		_, err := d.session.Database(d.db).Collection(d.table).UpdateMany(ctx, selector, data)
@@ -126,13 +103,6 @@ func (d *Default) Update(ctx context.Context, selector interface{}, data interfa
 
 // UpdateID performs an update on an existing resource with ID that equals the id argument
 func (d *Default) UpdateID(ctx context.Context, id interface{}, data interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		_, err := d.session.Database(d.db).Collection(d.table).UpdateOne(ctx, bson.M{
@@ -144,13 +114,6 @@ func (d *Default) UpdateID(ctx context.Context, id interface{}, data interface{}
 
 // DeleteAll deletes resources that match the passed filter
 func (d *Default) DeleteAll(ctx context.Context, pred interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		_, err := d.session.Database(d.db).Collection(d.table).DeleteMany(ctx, pred)
@@ -160,13 +123,6 @@ func (d *Default) DeleteAll(ctx context.Context, pred interface{}) error {
 
 // Delete deletes a resource with specified ID
 func (d *Default) Delete(ctx context.Context, id interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		_, err := d.session.Database(d.db).Collection(d.table).DeleteOne(ctx, id)
@@ -176,13 +132,6 @@ func (d *Default) Delete(ctx context.Context, id interface{}) error {
 
 // Find searches for a resource in the database and then returns a cursor
 func (d *Default) Find(ctx context.Context, id interface{}, value interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		res, err := d.session.Database(d.db).Collection(d.table).Find(ctx, bson.M{
@@ -197,13 +146,6 @@ func (d *Default) Find(ctx context.Context, id interface{}, value interface{}) e
 
 // FindFetchOne searches for a resource and then unmarshals the first row into value
 func (d *Default) FindFetchOne(ctx context.Context, id string, value interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		res := d.session.Database(d.db).Collection(d.table).FindOne(ctx, id)
@@ -213,13 +155,6 @@ func (d *Default) FindFetchOne(ctx context.Context, id string, value interface{}
 
 // FindOneBy is an utility for fetching values if they are stored in a key-value manenr.
 func (d *Default) FindOneBy(ctx context.Context, key string, value interface{}, result interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		res := d.session.Database(d.db).Collection(d.table).FindOne(ctx, bson.M{
@@ -231,13 +166,6 @@ func (d *Default) FindOneBy(ctx context.Context, key string, value interface{}, 
 
 // FindBy is an utility for fetching values if they are stored in a key-value manenr.
 func (d *Default) FindBy(ctx context.Context, key string, value interface{}, results interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		res, err := d.session.Database(d.db).Collection(d.table).Find(ctx, bson.M{
@@ -253,14 +181,6 @@ func (d *Default) FindBy(ctx context.Context, key string, value interface{}, res
 // FindByAndCount returns the number of elements that match the filter
 func (d *Default) FindByAndCount(ctx context.Context, key string, value interface{}) (int64, error) {
 	var count int64
-
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	if err := Transaction(ctx, d.session, func() error {
 		n, err := d.session.Database(d.db).Collection(d.table).Count(ctx, bson.M{
@@ -277,13 +197,6 @@ func (d *Default) FindByAndCount(ctx context.Context, key string, value interfac
 
 // FindByAndFetch retrieves a value by key and then fills results with the result.
 func (d *Default) FindByAndFetch(ctx context.Context, key string, value interface{}, results interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		res, err := d.session.Database(d.db).Collection(d.table).Find(ctx, bson.M{
@@ -300,13 +213,6 @@ func (d *Default) FindByAndFetch(ctx context.Context, key string, value interfac
 func (d *Default) WhereCount(ctx context.Context, filter interface{}) (int64, error) {
 	var count int64
 
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	if err := Transaction(ctx, d.session, func() error {
 		n, err := d.session.Database(d.db).Collection(d.table).Count(ctx, filter)
@@ -321,13 +227,6 @@ func (d *Default) WhereCount(ctx context.Context, filter interface{}) (int64, er
 
 // Where allows filtering with multiple fields
 func (d *Default) Where(ctx context.Context, filter interface{}, results interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		res, err := d.session.Database(d.db).Collection(d.table).Find(ctx, filter)
@@ -340,13 +239,6 @@ func (d *Default) Where(ctx context.Context, filter interface{}, results interfa
 
 // WhereAndFetchLimit filters with multiple fields and then fills results with all found resources
 func (d *Default) WhereAndFetchLimit(ctx context.Context, filter interface{}, paginator *db.Pagination, results interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		limit := int64(paginator.PerPage)
@@ -364,13 +256,6 @@ func (d *Default) WhereAndFetchLimit(ctx context.Context, filter interface{}, pa
 
 // WhereAndFetchOne filters with multiple fields and then fills result with the first found resource
 func (d *Default) WhereAndFetchOne(ctx context.Context, filter interface{}, result interface{}) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return Transaction(ctx, d.session, func() error {
 		res := d.session.Database(d.db).Collection(d.table).FindOne(ctx, filter)
@@ -380,25 +265,12 @@ func (d *Default) WhereAndFetchOne(ctx context.Context, filter interface{}, resu
 
 // List all entities from the database
 func (d *Default) List(ctx context.Context, results interface{}, sortParams *db.SortParameters, pagination *db.Pagination) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
-
 	// Run in transaction
 	return d.Search(ctx, results, bson.M{}, sortParams, pagination)
 }
 
 // Search all entities from the database
 func (d *Default) Search(ctx context.Context, results interface{}, filter interface{}, sortParams *db.SortParameters, pagination *db.Pagination) error {
-	// Instrument opentracing
-	if span := opentracing.SpanFromContext(ctx); span != nil {
-		ext.DBType.Set(span, "mongo")
-		ext.DBInstance.Set(span, d.db)
-		ext.PeerHostname.Set(span, d.session.ConnectionString())
-	}
 
 	// Apply Filter
 	if filter == nil {

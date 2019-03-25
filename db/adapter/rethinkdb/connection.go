@@ -62,9 +62,6 @@ func Connection(ctx context.Context, cfg *Configuration) (*r.Session, error) {
 		opts.Password = cfg.Password
 	}
 
-	// Activate Opentracing
-	opts.UseOpentracing = true
-
 	// Initialize a new setup connection
 	conn, err := r.Connect(opts)
 	if err != nil {
