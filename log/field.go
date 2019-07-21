@@ -28,6 +28,11 @@ type Field struct {
 	Value interface{}
 }
 
+// FieldStringer contract for Stringer
+type FieldStringer interface {
+	String() string
+}
+
 // -----------------------------------------------------------------------------
 
 // Error is a field builder for log attributes
@@ -40,6 +45,22 @@ func Error(err error) Field {
 
 // String is a field builder for string value
 func String(name, value string) Field {
+	return Field{
+		Name:  name,
+		Value: value,
+	}
+}
+
+// Stringer is a field builder that use String() method to generate the value
+func Stringer(name string, value FieldStringer) Field {
+	return Field{
+		Name:  name,
+		Value: value.String(),
+	}
+}
+
+// Any is a field builder that stores the RAW value, it will be decoded by the serializer.
+func Any(name string, value interface{}) Field {
 	return Field{
 		Name:  name,
 		Value: value,
