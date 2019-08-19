@@ -24,6 +24,7 @@ package postgresql
 
 import (
 	"context"
+	"database/sql"
 	"sync"
 	"time"
 
@@ -104,22 +105,25 @@ func Connection(ctx context.Context, cfg *Configuration) (*sqlx.DB, error) {
 		}
 
 		// Connect to database
-		conn, err = sqlx.Open(driverName, connStr.String())
+		db, err := sql.Open(driverName, connStr.String())
 		if err != nil {
 			return attempt < 10, xerrors.Errorf("postgresql: unable to open driver: %w", err)
 		}
 
 		// Check connection
-		if err = conn.Ping(); err != nil {
+		if err = db.Ping(); err != nil {
 			return attempt < 10, xerrors.Errorf("postgresql: unable to ping database: %w", err)
 		}
 
 		// Update connection pool settings
-		conn.SetConnMaxLifetime(5 * time.Minute)
-		conn.SetMaxIdleConns(0)
-		conn.SetMaxOpenConns(95)
+		db.SetConnMaxLifetime(5 * time.Minute)
+		db.SetMaxIdleConns(0)
+		db.SetMaxOpenConns(95)
 
 		log.For(ctx).Info("PostGreSQL connected !")
+
+		// Assign global connection
+		conn = sqlx.NewDb(db, "postgres")
 
 		return false, nil
 	})

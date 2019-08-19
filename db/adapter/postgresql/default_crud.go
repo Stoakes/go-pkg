@@ -26,9 +26,9 @@ import (
 	"context"
 	"database/sql"
 	"reflect"
+	"sync"
 
 	"go.zenithar.org/pkg/db"
-	"go.zenithar.org/pkg/log"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
@@ -45,6 +45,8 @@ type Default struct {
 	mapper          *reflectx.Mapper
 	columns         []string
 	sortableColumns map[string]bool
+	stmtCache       map[string]*sqlx.Stmt
+	stmtCacheMutex  sync.RWMutex
 }
 
 // NewCRUDTable sets up a new Default struct
@@ -61,6 +63,7 @@ func NewCRUDTable(session *sqlx.DB, db, table string, columns, sortable []string
 		mapper:          reflectx.NewMapper("db"),
 		columns:         columns,
 		sortableColumns: sortableColumns,
+		stmtCache:       map[string]*sqlx.Stmt{},
 	}
 }
 
@@ -101,14 +104,25 @@ func (d *Default) Create(ctx context.Context, data interface{}) error {
 		return xerrors.Errorf("postgresql: unable to build query: %w", err)
 	}
 
-	// Prepare the statement
-	stmt, err := d.session.PreparexContext(ctx, q)
-	if err != nil {
-		return xerrors.Errorf("postgresql: unable to prepapre query: %w", err)
+	var (
+		ok   bool
+		stmt *sqlx.Stmt
+	)
+
+	// Check prepare cache
+	stmt, ok = d.stmtCache[q]
+	if !ok {
+		// Prepare the statement
+		stmt, err = d.session.PreparexContext(ctx, q)
+		if err != nil {
+			return xerrors.Errorf("postgresql: unable to prepapre query: %w", err)
+		}
+
+		// Assign in cache
+		d.stmtCacheMutex.Lock()
+		d.stmtCache[q] = stmt
+		d.stmtCacheMutex.Unlock()
 	}
-	defer func(stmt *sqlx.Stmt) {
-		log.SafeClose(stmt, "Unable to close statement")
-	}(stmt)
 
 	// Do the insert query
 	_, err = stmt.ExecContext(ctx, args...)
@@ -136,14 +150,25 @@ func (d *Default) WhereCount(ctx context.Context, filter interface{}) (int, erro
 		return 0, xerrors.Errorf("postgresql: unable to build query: %w", err)
 	}
 
-	// Prepare the statement
-	stmt, err := d.session.PreparexContext(ctx, q)
-	if err != nil {
-		return 0, xerrors.Errorf("postgresql: unable to prepare query: %w", err)
+	var (
+		ok   bool
+		stmt *sqlx.Stmt
+	)
+
+	// Check prepare cache
+	stmt, ok = d.stmtCache[q]
+	if !ok {
+		// Prepare the statement
+		stmt, err = d.session.PreparexContext(ctx, q)
+		if err != nil {
+			return 0, xerrors.Errorf("postgresql: unable to prepapre query: %w", err)
+		}
+
+		// Assign in cache
+		d.stmtCacheMutex.Lock()
+		d.stmtCache[q] = stmt
+		d.stmtCacheMutex.Unlock()
 	}
-	defer func(stmt *sqlx.Stmt) {
-		log.SafeClose(stmt, "Unable to close statement")
-	}(stmt)
 
 	var count int
 	if err := stmt.QueryRowContext(ctx, args...).Scan(&count); err == sql.ErrNoRows {
@@ -171,17 +196,28 @@ func (d *Default) WhereAndFetchOne(ctx context.Context, filter interface{}, resu
 		return xerrors.Errorf("postgresql: unable to build query: %w", err)
 	}
 
-	// Prepare the statement
-	stmt, err := d.session.PreparexContext(ctx, q)
-	if err != nil {
-		return xerrors.Errorf("postgresql: unable to prepare query: %w", err)
+	var (
+		ok   bool
+		stmt *sqlx.Stmt
+	)
+
+	// Check prepare cache
+	stmt, ok = d.stmtCache[q]
+	if !ok {
+		// Prepare the statement
+		stmt, err = d.session.PreparexContext(ctx, q)
+		if err != nil {
+			return xerrors.Errorf("postgresql: unable to prepapre query: %w", err)
+		}
+
+		// Assign in cache
+		d.stmtCacheMutex.Lock()
+		d.stmtCache[q] = stmt
+		d.stmtCacheMutex.Unlock()
 	}
-	defer func(stmt *sqlx.Stmt) {
-		log.SafeClose(stmt, "Unable to close statement")
-	}(stmt)
 
 	// Do the insert query
-	err = d.session.QueryRowxContext(ctx, q, args...).StructScan(result)
+	err = stmt.QueryRowxContext(ctx, args...).StructScan(result)
 	if err == sql.ErrNoRows {
 		return db.ErrNoResult
 	} else if err != nil {
@@ -206,14 +242,25 @@ func (d *Default) Update(ctx context.Context, updates map[string]interface{}, fi
 		return xerrors.Errorf("postgresql: unable to build query: %w", err)
 	}
 
-	// Prepare the statement
-	stmt, err := d.session.PreparexContext(ctx, q)
-	if err != nil {
-		return xerrors.Errorf("postgresql: unable to prepare query: %w", err)
+	var (
+		ok   bool
+		stmt *sqlx.Stmt
+	)
+
+	// Check prepare cache
+	stmt, ok = d.stmtCache[q]
+	if !ok {
+		// Prepare the statement
+		stmt, err = d.session.PreparexContext(ctx, q)
+		if err != nil {
+			return xerrors.Errorf("postgresql: unable to prepapre query: %w", err)
+		}
+
+		// Assign in cache
+		d.stmtCacheMutex.Lock()
+		d.stmtCache[q] = stmt
+		d.stmtCacheMutex.Unlock()
 	}
-	defer func(stmt *sqlx.Stmt) {
-		log.SafeClose(stmt, "Unable to close statement")
-	}(stmt)
 
 	// Do the insert query
 	res, err := stmt.ExecContext(ctx, args...)
@@ -250,14 +297,25 @@ func (d *Default) RemoveOne(ctx context.Context, filter interface{}) error {
 		return xerrors.Errorf("postgresql: unable to build query: %w", err)
 	}
 
-	// Prepare the statement
-	stmt, err := d.session.PreparexContext(ctx, q)
-	if err != nil {
-		return xerrors.Errorf("postgresql: unable to prepare query: %w", err)
+	var (
+		ok   bool
+		stmt *sqlx.Stmt
+	)
+
+	// Check prepare cache
+	stmt, ok = d.stmtCache[q]
+	if !ok {
+		// Prepare the statement
+		stmt, err = d.session.PreparexContext(ctx, q)
+		if err != nil {
+			return xerrors.Errorf("postgresql: unable to prepapre query: %w", err)
+		}
+
+		// Assign in cache
+		d.stmtCacheMutex.Lock()
+		d.stmtCache[q] = stmt
+		d.stmtCacheMutex.Unlock()
 	}
-	defer func(stmt *sqlx.Stmt) {
-		log.SafeClose(stmt, "Unable to close statement")
-	}(stmt)
 
 	// Do the insert query
 	res, err := stmt.ExecContext(ctx, args...)
@@ -283,7 +341,7 @@ func (d *Default) RemoveOne(ctx context.Context, filter interface{}) error {
 // Search for element in collection
 func (d *Default) Search(ctx context.Context, filter interface{}, pagination *db.Pagination, sortParams *db.SortParameters, results interface{}) (int, error) {
 	// Initialize statement
-	q := sq.Select(d.columns...).
+	qb := sq.Select(d.columns...).
 		From(d.table).
 		PlaceholderFormat(sq.Dollar)
 
@@ -304,33 +362,44 @@ func (d *Default) Search(ctx context.Context, filter interface{}, pagination *db
 
 	if filter != nil {
 		// Prepare the query
-		q = q.Where(filter)
+		qb = qb.Where(filter)
 	}
 
 	// Apply pagination on data query only
 	if pagination != nil {
-		q = q.Offset(uint64(pagination.Offset())).Limit(uint64(pagination.PerPage))
+		qb = qb.Offset(uint64(pagination.Offset())).Limit(uint64(pagination.PerPage))
 	}
 
 	// Apply sort parameters
 	if sortParams != nil {
-		q = q.OrderBy(ConvertSortParameters(*sortParams, d.sortableColumns)...)
+		qb = qb.OrderBy(ConvertSortParameters(*sortParams, d.sortableColumns)...)
 	}
 
 	// Do the query
-	sqlData, args, err := q.ToSql()
+	q, args, err := qb.ToSql()
 	if err != nil {
 		return 0, xerrors.Errorf("postgresql: unable to build query: %w", err)
 	}
 
-	// Prepare the statement
-	stmt, err := d.session.PreparexContext(ctx, sqlData)
-	if err != nil {
-		return 0, xerrors.Errorf("postgresql: unable to prepare query: %w", err)
+	var (
+		ok   bool
+		stmt *sqlx.Stmt
+	)
+
+	// Check prepare cache
+	stmt, ok = d.stmtCache[q]
+	if !ok {
+		// Prepare the statement
+		stmt, err = d.session.PreparexContext(ctx, q)
+		if err != nil {
+			return 0, xerrors.Errorf("postgresql: unable to prepapre query: %w", err)
+		}
+
+		// Assign in cache
+		d.stmtCacheMutex.Lock()
+		d.stmtCache[q] = stmt
+		d.stmtCacheMutex.Unlock()
 	}
-	defer func(stmt *sqlx.Stmt) {
-		log.SafeClose(stmt, "Unable to close statement")
-	}(stmt)
 
 	if err := stmt.SelectContext(ctx, results, args...); err == sql.ErrNoRows {
 		return 0, db.ErrNoResult
