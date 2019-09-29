@@ -23,6 +23,8 @@
 package log
 
 import (
+	"fmt"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -55,6 +57,31 @@ func (l logger) Warn(msg string, fields ...zapcore.Field) {
 // Fatal logs a fatal error msg with fields
 func (l logger) Fatal(msg string, fields ...zapcore.Field) {
 	l.logger.Fatal(msg, fields...)
+}
+
+// Debugf formats & logs a debug msg
+func (l logger) Debugf(msg string, args ...interface{}) {
+	l.logger.Debug(fmt.Sprintf(msg, args...))
+}
+
+// Infof formats & logs an info msg
+func (l logger) Infof(msg string, args ...interface{}) {
+	l.logger.Info(fmt.Sprintf(msg, args...))
+}
+
+// Errorf formats & logs an error msg
+func (l logger) Errorf(msg string, args ...interface{}) {
+	l.logger.Error(fmt.Sprintf(msg, args...))
+}
+
+// Warnf formats & logs a warning msg
+func (l logger) Warnf(msg string, args ...interface{}) {
+	l.logger.Warn(fmt.Sprintf(msg, args...))
+}
+
+// Fatalf formats & logs a fatal error msg
+func (l logger) Fatalf(msg string, args ...interface{}) {
+	l.logger.Fatal(fmt.Sprintf(msg, args...))
 }
 
 // With creates a child logger, and optionally adds some context fields to that logger.
