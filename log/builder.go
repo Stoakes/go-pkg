@@ -25,7 +25,6 @@ package log
 import (
 	"context"
 
-	"github.com/TheZeroSlave/zapsentry"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -34,26 +33,24 @@ import (
 
 // Options declares logger options for builder
 type Options struct {
-	Debug     bool
-	LogLevel  string
-	AppName   string
-	AppID     string
-	Version   string
-	Revision  string
-	SentryDSN string
+	Debug    bool
+	LogLevel string
+	AppName  string
+	AppID    string
+	Version  string
+	Revision string
 }
 
 // -----------------------------------------------------------------------------
 
 // DefaultOptions defines default logger options
 var DefaultOptions = &Options{
-	Debug:     false,
-	LogLevel:  "info",
-	AppName:   "changeme",
-	AppID:     "changeme",
-	Version:   "0.0.1",
-	Revision:  "123456789",
-	SentryDSN: "",
+	Debug:    false,
+	LogLevel: "info",
+	AppName:  "changeme",
+	AppID:    "changeme",
+	Version:  "0.0.1",
+	Revision: "123456789",
 }
 
 // -----------------------------------------------------------------------------
@@ -99,29 +96,6 @@ func Setup(ctx context.Context, opts Options) {
 		zap.String("@appID", opts.AppID),
 		zap.Namespace("@fields"),
 	)
-
-	// sentry support
-	if opts.SentryDSN != "" {
-		logger.Info("Starting sentry collector", zap.String("dsn", opts.SentryDSN))
-
-		cfg := zapsentry.Configuration{
-			Level: zapcore.ErrorLevel, //when to send message to sentry
-			Tags: map[string]string{
-				"application.name": opts.AppName,
-				"application.id":   opts.AppID,
-				"version":          opts.Version,
-				"revision":         opts.Revision,
-			},
-		}
-		core, err := zapsentry.NewCore(cfg, zapsentry.NewSentryClientFromDSN(opts.SentryDSN))
-		if err != nil {
-			For(ctx).Warn("Unable to attach sentry to logger", zap.Error(err))
-		}
-
-		logger = zapsentry.AttachCoreToLogger(core, logger)
-	} else {
-		logger.Info("Sentry collector disabled")
-	}
 
 	// Prepare factory
 	logFactory := NewFactory(logger)
