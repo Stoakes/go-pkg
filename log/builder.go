@@ -62,15 +62,16 @@ func Setup(ctx context.Context, opts Options) {
 	var config zap.Config
 
 	if opts.Debug {
+		opts.LogLevel = "debug"
 		config = zap.NewDevelopmentConfig()
-		config.DisableCaller = true
+		config.DisableCaller = false
 		config.DisableStacktrace = true
 	} else {
 		config = zap.NewProductionConfig()
+		config.DisableCaller = true
 		config.DisableStacktrace = true
 		config.EncoderConfig.MessageKey = "@message"
 		config.EncoderConfig.TimeKey = "@timestamp"
-		config.EncoderConfig.CallerKey = "@caller"
 		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	}
 
@@ -82,7 +83,7 @@ func Setup(ctx context.Context, opts Options) {
 
 	// Build real logger
 	logger, err := config.Build(
-		zap.AddCallerSkip(2),
+		zap.AddCallerSkip(1),
 	)
 	if err != nil {
 		panic(err)
