@@ -76,7 +76,7 @@ type pilotClient struct {
 	pilotConn    *grpc.ClientConn                                                       // TCP connection to Pilot server
 	pilotStream  discoveryv2.AggregatedDiscoveryService_StreamAggregatedResourcesClient // gRPC stream to Pilot server
 	shutdown     *atomic.Bool                                                           // is Server shutting down
-	retryCounter uint                                                                   // when currently disconnected, how many times has the client tried to reconnect. Used for backoff delay computation
+	retryCounter *atomic.Uint32                                                         // when currently disconnected, how many times has the client tried to reconnect. Used for backoff delay computation
 }
 
 // NewPilotClient starts a subscription (gRPC stream) to pilot. When using several gRPC connections,
@@ -97,7 +97,7 @@ func newPilotClient(ctx context.Context, options PilotClientOptions) (*pilotClie
 		shutdown:      atomic.NewBool(false),
 		options:       options,
 		subscriptions: newStateStore(),
-		retryCounter:  0,
+		retryCounter:  atomic.NewUint32(0),
 	}
 	err = pClient.connect(ctx)
 	if err != nil {
@@ -233,15 +233,16 @@ func (p *pilotClient) reconnect(ctx context.Context, err error) {
 		connectionErr = p.connect(ctx) // connection attempt
 		if connectionErr != nil {
 			log.For(ctx).Error("Trying to reconnect to Pilot failed: " + connectionErr.Error())
-			time.Sleep(p.backoff(p.retryCounter))
+			time.Sleep(p.backoff(p.retryCounter.Load()))
+			p.retryCounter.Inc()
 			continue
 		}
 		p.RefreshFromRemote()
-		p.retryCounter = 0
+		p.retryCounter.Store(0)
 	}
 }
 
-func (p *pilotClient) backoff(retries uint) time.Duration {
+func (p *pilotClient) backoff(retries uint32) time.Duration {
 	if retries == 0 {
 		return p.options.InitialBackoff
 	}

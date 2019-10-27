@@ -95,7 +95,7 @@ func (a *adsServerMock) Shutdown() {
 		stream.quit <- true
 	}
 	a.grpcServer.Stop()
-	time.Sleep(3 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 }
 
 func (a *adsServerMock) Address() string {

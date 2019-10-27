@@ -366,6 +366,7 @@ func TestBackoff(t *testing.T) {
 
 // TestReconnection tests a pilot client can successfully reconnect to a
 func TestReconnection(t *testing.T) {
+	log.Setup(context.Background(), log.Options{LogLevel: "debug", Debug: true})
 	adsMock := newADSServerMock(t, "")
 	pClient, err := newPilotClient(context.Background(), PilotClientOptions{
 		PilotURL:       adsMock.Address(),
@@ -421,8 +422,17 @@ func TestReconnection(t *testing.T) {
 		t.Error("Number of message on helloChannel should be 1. Got", helloChannelMsgCounter)
 	}
 	time.Sleep(50 * time.Millisecond)
+	if pClient.retryCounter.Load() != 0 {
+		t.Error("Number of retries should be equal to 0")
+	}
 	adsMock.Shutdown()
-	time.Sleep(1 * time.Second)
+	time.Sleep(3 * time.Second)
+	if backoff0 := pClient.backoff(0).String(); backoff0 != "10ms" {
+		t.Errorf("Invalid backoff value. Expected 10ms, got %s", backoff0)
+	}
+	if pClient.retryCounter.Load() == 0 {
+		t.Error("Number of retries should be greater than 0")
+	}
 	adsMock = newADSServerMock(t, ":"+strings.Split(pClient.options.PilotURL, ":")[1]) // use same port as previous server
 	time.Sleep(2 * time.Second)
 	if len(adsMock.streams) < 1 {

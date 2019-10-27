@@ -13,6 +13,7 @@ import (
 	core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	endpoint "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
+	"go.uber.org/atomic"
 )
 
 // testMakePilotClient creates a new pilotClient without starting a subscription to Pilot
@@ -24,8 +25,10 @@ func testMakePilotClient() pilotClient {
 		Namespace: "istio-system",
 	}.Validate()
 	return pilotClient{
+		shutdown:      atomic.NewBool(false),
 		options:       o,
 		subscriptions: newStateStore(),
+		retryCounter:  atomic.NewUint32(0),
 	}
 }
 
