@@ -422,21 +422,24 @@ func TestReconnection(t *testing.T) {
 		t.Error("Number of message on helloChannel should be 1. Got", helloChannelMsgCounter)
 	}
 	time.Sleep(50 * time.Millisecond)
-	if pClient.retryCounter.Load() != 0 {
-		t.Error("Number of retries should be equal to 0")
+	if connected, retries := pClient.IsConnected(); !connected || retries != 0 {
+		t.Errorf("Pilot client should be seen as connected: %t; retries counter should be 0: %d", connected, retries)
 	}
 	adsMock.Shutdown()
 	time.Sleep(3 * time.Second)
 	if backoff0 := pClient.backoff(0).String(); backoff0 != "10ms" {
 		t.Errorf("Invalid backoff value. Expected 10ms, got %s", backoff0)
 	}
-	if pClient.retryCounter.Load() == 0 {
-		t.Error("Number of retries should be greater than 0")
+	if connected, retries := pClient.IsConnected(); connected || retries == 0 {
+		t.Errorf("Pilot client should not be seen as connected: %t; retries counter should be greater than 0: %d", connected, retries)
 	}
 	adsMock = newADSServerMock(t, ":"+strings.Split(pClient.options.PilotURL, ":")[1]) // use same port as previous server
 	time.Sleep(2 * time.Second)
 	if len(adsMock.streams) < 1 {
 		t.Fatal("Pilot client has not reconnected in 2 seconds")
+	}
+	if connected, retries := pClient.IsConnected(); !connected || retries != 0 {
+		t.Errorf("Pilot client should be seen as re-connected: %t; retries counter should be back to 0: %d", connected, retries)
 	}
 	adsMock.streams[0].control <- endpointDiscoveryResponse(testCreateEdsMap(t, 1), "1")
 	time.Sleep(5 * time.Millisecond)

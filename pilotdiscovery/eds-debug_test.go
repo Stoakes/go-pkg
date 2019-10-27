@@ -25,6 +25,7 @@ func testMakePilotClient() pilotClient {
 		Namespace: "istio-system",
 	}.Validate()
 	return pilotClient{
+		connected:     atomic.NewBool(false),
 		shutdown:      atomic.NewBool(false),
 		options:       o,
 		subscriptions: newStateStore(),

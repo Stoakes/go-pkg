@@ -43,6 +43,7 @@ type PilotClient interface {
 	Shutdown()
 	RefreshFromRemote() error
 	EdszHandler(w http.ResponseWriter, req *http.Request)
+	IsConnected() (bool, uint32)
 }
 
 // PilotClientOptions is a struct gathering every option required to start a PilotClient
@@ -70,13 +71,21 @@ type PilotClientOptions struct {
 
 // pilotClient is the implementation of the PilotClient interface
 type pilotClient struct {
-	options       PilotClientOptions
-	subscriptions *stateStore // struct storing internal subscriptions and endpoints knowledge
-
-	pilotConn    *grpc.ClientConn                                                       // TCP connection to Pilot server
-	pilotStream  discoveryv2.AggregatedDiscoveryService_StreamAggregatedResourcesClient // gRPC stream to Pilot server
-	shutdown     *atomic.Bool                                                           // is Server shutting down
-	retryCounter *atomic.Uint32                                                         // when currently disconnected, how many times has the client tried to reconnect. Used for backoff delay computation
+	// connected is a boolean used to store connection to pilot existence
+	connected *atomic.Bool
+	// options Pilot Options, provided on start
+	options PilotClientOptions
+	// subscriptions struct storing internal subscriptions and endpoints knowledge
+	subscriptions *stateStore
+	// pilotConn TCP connection to Pilot server
+	pilotConn *grpc.ClientConn
+	// pilotStream gRPC stream to Pilot server
+	pilotStream discoveryv2.AggregatedDiscoveryService_StreamAggregatedResourcesClient
+	// shutdown is Server shutting down ?
+	shutdown *atomic.Bool
+	// retryCounter How many times has the client tried to reconnect to Pilot since it's been disconnected.
+	// Used for backoff delay computation. A reconnection sets it back to 0.
+	retryCounter *atomic.Uint32
 }
 
 // NewPilotClient starts a subscription (gRPC stream) to pilot. When using several gRPC connections,
@@ -97,6 +106,7 @@ func newPilotClient(ctx context.Context, options PilotClientOptions) (*pilotClie
 		shutdown:      atomic.NewBool(false),
 		options:       options,
 		subscriptions: newStateStore(),
+		connected:     atomic.NewBool(false),
 		retryCounter:  atomic.NewUint32(0),
 	}
 	err = pClient.connect(ctx)
@@ -127,7 +137,10 @@ func newPilotClient(ctx context.Context, options PilotClientOptions) (*pilotClie
 }
 
 // AddWatch takes an adress, updates the subscription query and return a subscription channel where
-// updates on the adress will be sent
+// updates on the adress will be sent.
+// Warning: this is not a diff function: when an event occurs, the []EndpointUpdate received on the channel
+// is the list of every currently valid endpoint.
+// Example: At time 0 [a,b,c] are valid endpoints. At time 1, c is shut down => the received update for this will be [a,b]
 func (p *pilotClient) AddWatch(host string, namespace string, port string) (chan []EndpointUpdate, error) {
 	req := &xdsapi.DiscoveryRequest{
 		Node:          p.node(),
@@ -166,6 +179,13 @@ func (p *pilotClient) RefreshFromRemote() error {
 	}
 	log.Bg().Debugf("Sending discovery request for %v", p.subscriptions.watchedList())
 	return p.pilotStream.Send(req)
+}
+
+// IsConnected returns if the client is connected to a Pilot instance and the number of retries.
+// Number of retries is returned to help you create readiness strategies based on retry number (beware of cascading failures though).
+// Warning: The retry counter is incremented after the first retry. Therefore, there is a small risk the result is not up to date.
+func (p *pilotClient) IsConnected() (bool, uint32) {
+	return p.connected.Load(), p.retryCounter.Load()
 }
 
 // node creates a pilot node object with node identity
@@ -217,12 +237,14 @@ func (p *pilotClient) connect(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	p.connected.Store(true)
 	log.For(ctx).Debug("Stream to Pilot opened")
 	return nil
 }
 
 // reconnct cleans current connection and try to re-open new ones + refresh state if it succeeds
 func (p *pilotClient) reconnect(ctx context.Context, err error) {
+	p.connected.Store(false)
 	connectionErr := err
 	for connectionErr != nil {
 		// pilotClient.pilotStream = nil
@@ -237,8 +259,9 @@ func (p *pilotClient) reconnect(ctx context.Context, err error) {
 			p.retryCounter.Inc()
 			continue
 		}
-		p.RefreshFromRemote()
 		p.retryCounter.Store(0)
+		p.connected.Store(true)
+		p.RefreshFromRemote()
 	}
 }
 
