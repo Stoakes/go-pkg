@@ -10,13 +10,20 @@ import (
 // stateStore stores the state of the pilot Client: known internal subscriptions, known endpoints
 type stateStore struct {
 	lock     sync.Mutex                               // Lock on state modification
-	watchers map[string][](chan []EndpointUpdate)     // for a given cluster name, every channel to watchers on it
+	watchers map[string][](chan EndpointsState)       // for a given cluster name, every channel to watchers on it
 	edsMap   map[string]*xdsapi.ClusterLoadAssignment // for a given cluster name every currently known endpoints of it
 	version  *atomic.Uint64                           // Mostly unused for now, number of modification since listener stared
 }
 
-// EndpointUpdate is the representation of an endpoint and what will be sent to internal consumers
-type EndpointUpdate struct {
+// EndpointsState is the list of every known endpoint at a moment. This type aims at making output less misleading
+// It is the "state of the world" as the AggregatedResources stream send them
+// by opposition to sending the diff
+type EndpointsState struct {
+	Endpoints []Endpoint
+}
+
+// Endpoint is the representation of an endpoint and what will be sent to internal consumers
+type Endpoint struct {
 	IP     string // IP address of the endpoint
 	Region string // Region of the IP (europe-west2)
 	Zone   string //  zone/AZ of the IP (europe-west2-b)
@@ -25,7 +32,7 @@ type EndpointUpdate struct {
 // newStateStore creates a new state store
 func newStateStore() *stateStore {
 	return &stateStore{
-		watchers: make(map[string][](chan []EndpointUpdate)),
+		watchers: make(map[string][](chan EndpointsState)),
 		version:  atomic.NewUint64(0),
 		edsMap:   make(map[string]*xdsapi.ClusterLoadAssignment),
 	}
@@ -42,19 +49,19 @@ func (s *stateStore) Unlock() {
 }
 
 // addWatcher add a watcher on a clustername returns a channel where every ip
-func (s *stateStore) addWatcher(host string, namespace string, port string) (chan []EndpointUpdate, error) {
+func (s *stateStore) addWatcher(host string, namespace string, port string) (chan EndpointsState, error) {
 	s.Lock()
 	defer s.Unlock()
 	address := s.format(host, namespace, port)
 	_, ok := s.watchers[address]
 	if ok { // key alread exists in the watcher map: append to the list
-		newChannel := make(chan []EndpointUpdate)
+		newChannel := make(chan EndpointsState)
 		s.watchers[address] = append(s.watchers[address], newChannel)
 		return newChannel, nil
 	}
 	// the adress is not already watched, create the entry in the map
-	newChannel := make(chan []EndpointUpdate)
-	s.watchers[address] = [](chan []EndpointUpdate){newChannel}
+	newChannel := make(chan EndpointsState)
+	s.watchers[address] = [](chan EndpointsState){newChannel}
 	return newChannel, nil
 }
 
@@ -86,7 +93,7 @@ func (s *stateStore) clear() {
 			close(channel)
 		}
 	}
-	s.watchers = make(map[string][](chan []EndpointUpdate))
+	s.watchers = make(map[string][](chan EndpointsState))
 	s.version = atomic.NewUint64(0)
 	s.edsMap = make(map[string]*xdsapi.ClusterLoadAssignment)
 }

@@ -392,8 +392,8 @@ func TestReconnection(t *testing.T) {
 				helloChannelMsgCounter++
 				// Test on message content
 				if helloChannelMsgCounter == 1 {
-					if len(msg) != 3 {
-						t.Error("Expected message length was 3. Got ", len(msg))
+					if len(msg.Endpoints) != 3 {
+						t.Error("Expected message length was 3. Got ", len(msg.Endpoints))
 					}
 					tt := map[int][]string{
 						0: []string{"10.4.0.16", "europe-west1", "europe-west1-b"},
@@ -401,7 +401,7 @@ func TestReconnection(t *testing.T) {
 						2: []string{"10.4.2.2", "europe-west1", "europe-west1-d"},
 					}
 					for k, v := range tt {
-						if msg[k].IP != v[0] || msg[k].Region != v[1] || msg[k].Zone != v[2] {
+						if msg.Endpoints[k].IP != v[0] || msg.Endpoints[k].Region != v[1] || msg.Endpoints[k].Zone != v[2] {
 							t.Errorf("Test %d: Unexpected message. Expected %s got %s", k, v, msg)
 						}
 					}

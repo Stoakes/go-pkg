@@ -39,7 +39,7 @@ const (
 
 // PilotClient is a client to a Pilot Service Discovery Server
 type PilotClient interface {
-	AddWatch(host string, namespace string, port string) (chan []EndpointUpdate, error)
+	AddWatch(host string, namespace string, port string) (chan EndpointsState, error)
 	Shutdown()
 	RefreshFromRemote() error
 	EdszHandler(w http.ResponseWriter, req *http.Request)
@@ -137,11 +137,8 @@ func newPilotClient(ctx context.Context, options PilotClientOptions) (*pilotClie
 }
 
 // AddWatch takes an adress, updates the subscription query and return a subscription channel where
-// updates on the adress will be sent.
-// Warning: this is not a diff function: when an event occurs, the []EndpointUpdate received on the channel
-// is the list of every currently valid endpoint.
-// Example: At time 0 [a,b,c] are valid endpoints. At time 1, c is shut down => the received update for this will be [a,b]
-func (p *pilotClient) AddWatch(host string, namespace string, port string) (chan []EndpointUpdate, error) {
+// updates on the adress will be sent. Get more details about EndpointsState in its documentation
+func (p *pilotClient) AddWatch(host string, namespace string, port string) (chan EndpointsState, error) {
 	req := &xdsapi.DiscoveryRequest{
 		Node:          p.node(),
 		TypeUrl:       configTypeToTypeURL("eds"),
@@ -259,6 +256,7 @@ func (p *pilotClient) reconnect(ctx context.Context, err error) {
 			p.retryCounter.Inc()
 			continue
 		}
+		log.For(ctx).Infof("Reconnection succeeded after %d attempts", p.retryCounter.Load())
 		p.retryCounter.Store(0)
 		p.connected.Store(true)
 		p.RefreshFromRemote()
@@ -314,10 +312,10 @@ func (p *pilotClient) handleRecv(msg *xdsapi.DiscoveryResponse) {
 			}
 			p.subscriptions.edsMap[e.GetClusterName()] = e
 			i := 0
-			ips := []EndpointUpdate{}
+			ips := EndpointsState{}
 			for _, endpoints := range e.Endpoints {
 				for _, lbEndpoints := range endpoints.LbEndpoints {
-					ips = append(ips, EndpointUpdate{
+					ips.Endpoints = append(ips.Endpoints, Endpoint{
 						IP:     lbEndpoints.GetEndpoint().GetAddress().GetSocketAddress().GetAddress(),
 						Region: endpoints.Locality.Region,
 						Zone:   endpoints.Locality.Zone})
