@@ -2,8 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Stoakes/go-pkg/log v0.3.1 h1:u6QrCPONBjcdp262iok6+kHuem5q5WU7TaDlS6ytW1E=
 github.com/Stoakes/go-pkg/log v0.3.1/go.mod h1:4//rEEVZKYQebcO01md7IfuQJv56mJvUYvgP6btU6rE=
-github.com/Stoakes/go-pkg/pilotdiscovery v0.1.1 h1:4lofEmDWC20RAc7zjsUNzBy9ko6ns+/njzEAM0in03Q=
-github.com/Stoakes/go-pkg/pilotdiscovery v0.1.1/go.mod h1:5vGrCfSm0rWoZJlF06E+stVWovCdTlXLOU/nM7JiZ+4=
+github.com/Stoakes/go-pkg/pilotdiscovery v0.3.0 h1:CvNPUurXl+eYfNEUcCCjsDc2nhhiGzfdbj6xX6/fTNI=
+github.com/Stoakes/go-pkg/pilotdiscovery v0.3.0/go.mod h1:5vGrCfSm0rWoZJlF06E+stVWovCdTlXLOU/nM7JiZ+4=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=

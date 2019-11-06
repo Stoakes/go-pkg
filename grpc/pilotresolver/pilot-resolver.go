@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Stoakes/go-pkg/pilotdiscovery"
 	"github.com/Stoakes/go-pkg/log"
+	"github.com/Stoakes/go-pkg/pilotdiscovery"
 
 	"google.golang.org/grpc/naming"
 )
@@ -26,11 +26,11 @@ type Resolver struct{}
 type pilotWatcher struct {
 	target        string // the hostname:port to connect to
 	port          string
-	addresses     map[string]bool                      // Stores the known endpoints for <target>
-	endpointsChan chan []pilotdiscovery.EndpointUpdate // incoming channel of endpoints from pilot client
-	updateChan    chan []*naming.Update                // outgoing channel of naming update for the gRPC client
-	errChan       chan error                           // channel for errors. Every error posted to that channel will be logged
-	quit          chan bool                            // channel for stop signal. Any boolean posted on it will stop the watcher
+	addresses     map[string]bool                    // Stores the known endpoints for <target>
+	endpointsChan chan pilotdiscovery.EndpointsState // incoming channel of endpoints from pilot client
+	updateChan    chan []*naming.Update              // outgoing channel of naming update for the gRPC client
+	errChan       chan error                         // channel for errors. Every error posted to that channel will be logged
+	quit          chan bool                          // channel for stop signal. Any boolean posted on it will stop the watcher
 }
 
 // Resolve creates a Watcher for target.
@@ -114,7 +114,7 @@ func (c *pilotWatcher) watch() {
 				c.addresses[k] = false
 			}
 
-			for _, v := range endpoints {
+			for _, v := range endpoints.Endpoints {
 				if _, ok := c.addresses[v.IP]; !ok {
 					updates = append(updates, &naming.Update{
 						Op:   naming.Add,
