@@ -238,3 +238,12 @@ func testCreateEdsMap(t *testing.T, length int) []*xdsapi.ClusterLoadAssignment 
 	t.Fatal("Invalid length value. expecting 1 or 2")
 	return nil
 }
+
+func testCreateEmptyResponse() []*xdsapi.ClusterLoadAssignment {
+
+	emptyCLA := xdsapi.ClusterLoadAssignment{
+		ClusterName: "outbound|6565||empty-service.default.svc.cluster.local",
+	}
+
+	return []*xdsapi.ClusterLoadAssignment{&emptyCLA}
+}

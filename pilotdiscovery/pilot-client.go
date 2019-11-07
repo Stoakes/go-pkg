@@ -291,6 +291,10 @@ func (p *pilotClient) ack(msg *xdsapi.DiscoveryResponse) {
 // handleRecv handles incoming message from pilot stream and broadcast endpoints to internal subscribers.
 // Especially it ignore every non endpoints that would be in the response
 func (p *pilotClient) handleRecv(msg *xdsapi.DiscoveryResponse) {
+	if msg == nil {
+		log.Bg().Debug("Got nil discovery response from Pilot")
+		return
+	}
 	eds := []*xdsapi.ClusterLoadAssignment{}
 	for _, rsc := range msg.Resources { // Any
 		valBytes := rsc.Value

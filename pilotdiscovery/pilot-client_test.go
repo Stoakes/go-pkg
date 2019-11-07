@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Stoakes/go-pkg/log"
+	xdsapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	"google.golang.org/grpc"
 )
 
@@ -351,7 +352,7 @@ func TestMultipleSamewatchers(t *testing.T) {
 	}
 }
 
-// estBackOff tests backoff function of a pilotClient
+// TestBackOff tests backoff function of a pilotClient
 func TestBackoff(t *testing.T) {
 	pClient := testMakePilotClient()
 	if pClient.backoff(0) != pClient.options.InitialBackoff {
@@ -447,4 +448,25 @@ func TestReconnection(t *testing.T) {
 		t.Error("Number of message on helloChannel should be 2. Got", helloChannelMsgCounter)
 	}
 	defer adsMock.Shutdown()
+}
+
+// TestHandleRecv tests the reception from invalid, malformed messages.
+func TestHandleRecv(t *testing.T) {
+	adsMock := newADSServerMock(t, "")
+	defer adsMock.Shutdown()
+	pClient, err := newPilotClient(context.Background(), PilotClientOptions{
+		PilotURL:    adsMock.Address(),
+		IP:          "127.0.0.1",
+		AppName:     "testAgent",
+		Namespace:   "testns",
+		DialOptions: []grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(3 * time.Second)},
+	})
+	if err != nil {
+		t.Fatal("Cannot start pilot client " + err.Error())
+	}
+	defer pClient.Shutdown()
+
+	pClient.handleRecv(endpointDiscoveryResponse(testCreateEmptyResponse(), "1"))
+	pClient.handleRecv(&xdsapi.DiscoveryResponse{})
+	pClient.handleRecv(nil)
 }
