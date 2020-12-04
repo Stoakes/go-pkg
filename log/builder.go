@@ -33,24 +33,26 @@ import (
 
 // Options declares logger options for builder
 type Options struct {
-	Debug    bool
-	LogLevel string
-	AppName  string
-	AppID    string
-	Version  string
-	Revision string
+	Debug         bool
+	LogLevel      string
+	AppName       string
+	AppID         string
+	Version       string
+	Revision      string
+	DisableFields bool
 }
 
 // -----------------------------------------------------------------------------
 
 // DefaultOptions defines default logger options
 var DefaultOptions = &Options{
-	Debug:    false,
-	LogLevel: "info",
-	AppName:  "changeme",
-	AppID:    "changeme",
-	Version:  "0.0.1",
-	Revision: "123456789",
+	Debug:         false,
+	LogLevel:      "info",
+	AppName:       "changeme",
+	AppID:         "changeme",
+	Version:       "0.0.1",
+	Revision:      "123456789",
+	DisableFields: false,
 }
 
 // -----------------------------------------------------------------------------
@@ -90,13 +92,15 @@ func Setup(ctx context.Context, opts Options) {
 	}
 
 	// Add prefix to logger
-	logger = logger.With(
-		zap.String("@appName", opts.AppName),
-		zap.String("@version", opts.Version),
-		zap.String("@revision", opts.Revision),
-		zap.String("@appID", opts.AppID),
-		zap.Namespace("@fields"),
-	)
+	if !opts.DisableFields {
+		logger = logger.With(
+			zap.String("@appName", opts.AppName),
+			zap.String("@version", opts.Version),
+			zap.String("@revision", opts.Revision),
+			zap.String("@appID", opts.AppID),
+			zap.Namespace("@fields"),
+		)
+	}
 
 	// Prepare factory
 	logFactory := NewFactory(logger)
