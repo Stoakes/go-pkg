@@ -58,7 +58,8 @@ var DefaultOptions = &Options{
 // -----------------------------------------------------------------------------
 
 // Setup the logger
-func Setup(ctx context.Context, opts Options) {
+// return atomicLevel for thread-safe log level change
+func Setup(ctx context.Context, opts Options) zap.AtomicLevel {
 
 	// Initialize logs
 	var config zap.Config
@@ -110,4 +111,6 @@ func Setup(ctx context.Context, opts Options) {
 
 	// Override zap default logger
 	zap.ReplaceGlobals(logger)
+
+	return config.Level
 }
