@@ -1,5 +1,5 @@
 # Common micropackage for golang projects
 
 ```sh
-$ go get -u go.zenithar.org/pkg
+$ go get -u github.com/Stoakes/go-pkg
 ```

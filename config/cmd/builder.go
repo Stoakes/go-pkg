@@ -5,13 +5,13 @@ import (
 	"sort"
 	"strings"
 
+	"go.zenithar.org/pkg/log"
+	"go.zenithar.org/pkg/types"
+
 	defaults "github.com/mcuadros/go-defaults"
 	toml "github.com/pelletier/go-toml"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-
-	"go.zenithar.org/pkg/flags"
-	"go.zenithar.org/pkg/log"
 )
 
 var configNewAsEnvFlag bool
@@ -23,8 +23,9 @@ func NewConfigCommand(conf interface{}, envPrefix string) *cobra.Command {
 
 	// config
 	configCmd := &cobra.Command{
-		Use:   "config",
-		Short: "Manage Service Configuration",
+		Use:     "config",
+		Aliases: []string{"cfg"},
+		Short:   "Manage Service Configuration",
 	}
 
 	// config new
@@ -37,11 +38,14 @@ func NewConfigCommand(conf interface{}, envPrefix string) *cobra.Command {
 			if !configNewAsEnvFlag {
 				btes, err := toml.Marshal(conf)
 				if err != nil {
-					log.Bg().Fatal("Error during configuration export", zap.Error(err))
+					log.For(cmd.Context()).Fatal("Error during configuration export", zap.Error(err))
 				}
 				fmt.Println(string(btes))
 			} else {
-				m := flags.AsEnvVariables(conf, upPrefix, true)
+				m, err := types.AsEnvVariables(conf, upPrefix, true)
+				if err != nil {
+					log.For(cmd.Context()).Fatal("Error during environment variables processing", zap.Error(err))
+				}
 				keys := []string{}
 
 				for k := range m {
