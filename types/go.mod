@@ -1,8 +1,8 @@
-module go.zenithar.org/pkg/types
+module github.com/Stoakes/go-pkg/types
 
 go 1.14
 
-replace go.zenithar.org/pkg/log => ../log
+replace github.com/Stoakes/go-pkg/log => ../log
 
 require (
 	github.com/fatih/structs v1.1.0

@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"go.zenithar.org/pkg/types"
+	"github.com/Stoakes/go-pkg/types"
 )
 
 func TestMetadataCreation(t *testing.T) {
