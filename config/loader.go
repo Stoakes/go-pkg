@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"go.zenithar.org/pkg/log"
-	"go.zenithar.org/pkg/types"
+	"github.com/Stoakes/go-pkg/log"
+	"github.com/Stoakes/go-pkg/types"
 
 	defaults "github.com/mcuadros/go-defaults"
 	"github.com/spf13/viper"

@@ -1,15 +1,17 @@
-module go.zenithar.org/pkg/config
+module github.com/Stoakes/go-pkg/config
 
 go 1.12
 
+replace github.com/Stoakes/go-pkg/log => ../log
+
 require (
-	github.com/fatih/structs v1.1.0 // indirect
+	github.com/Stoakes/go-pkg/log v0.4.0
+	github.com/Stoakes/go-pkg/types v0.0.3
+	github.com/hashicorp/hcl/v2 v2.9.0
 	github.com/mcuadros/go-defaults v1.1.1-0.20161116231230-e1c978be3307
 	github.com/pelletier/go-toml v1.4.0
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.4.0
 	go.uber.org/zap v1.10.0
-	go.zenithar.org/pkg/flags v0.0.1
-	go.zenithar.org/pkg/log v0.2.0
-	golang.org/x/xerrors v0.0.0-20190513163551-3ee3066db522
+	gopkg.in/yaml.v2 v2.2.4
 )
