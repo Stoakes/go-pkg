@@ -8,8 +8,7 @@ import (
 	"github.com/Stoakes/go-pkg/log"
 	"github.com/Stoakes/go-pkg/types"
 
-	"github.com/hashicorp/hcl/v2/gohcl"
-	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/alecthomas/hcl"
 	defaults "github.com/mcuadros/go-defaults"
 	toml "github.com/pelletier/go-toml"
 	"github.com/spf13/cobra"
@@ -62,9 +61,11 @@ func NewConfigCommand(conf interface{}, envPrefix string, exportFormat ConfigFil
 					return
 				}
 				if exportFormat == Hcl {
-					f := hclwrite.NewEmptyFile()
-					gohcl.EncodeIntoBody(conf, f.Body())
-					fmt.Fprintf(cmd.OutOrStdout(), string(f.Bytes()))
+					btes, err := hcl.Marshal(conf)
+					if err != nil {
+						log.For(cmd.Context()).Fatal("Error during configuration export", zap.Error(err))
+					}
+					fmt.Fprintf(cmd.OutOrStdout(), string(btes))
 					return
 				}
 				if exportFormat == None {
