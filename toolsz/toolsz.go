@@ -84,11 +84,11 @@ func versionHandler() http.Handler {
 			"go_version": GoVersion,
 		})
 		if err != nil {
-			w.Write([]byte(err.Error()))
+			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
 		if _, err := w.Write(res); err != nil {
-			w.Write([]byte(err.Error()))
+			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
 	})

@@ -23,7 +23,12 @@ func TestStart(t *testing.T) {
 	toolServer := toolsz.New(port, logger, &map[string]http.Handler{
 		"404": http.NotFoundHandler(),
 	})
-	go toolServer.Start(ctx)
+	go func() {
+		err := toolServer.Start(ctx)
+		if err != nil {
+			t.Fatalf("Cannot start tools server: " + err.Error())
+		}
+	}()
 	time.Sleep(100 * time.Millisecond)
 	host := "http://localhost:" + strconv.Itoa(port)
 
@@ -67,6 +72,7 @@ func testGet(url string, expectedStatus int) ([]byte, error) {
 	if resp.StatusCode != expectedStatus {
 		return []byte{}, fmt.Errorf("Expecting %d HTTP status code on %s got %d", expectedStatus, url, resp.StatusCode)
 	}
+	//nolint:errcheck
 	defer resp.Body.Close()
 	return ioutil.ReadAll(resp.Body)
 
