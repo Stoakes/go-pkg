@@ -54,7 +54,7 @@ Local {
 
 remote {
   address = ""
-  useTLS  = false
+  useTLS = false
 }
 `
 

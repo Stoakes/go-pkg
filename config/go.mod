@@ -7,7 +7,7 @@ replace github.com/Stoakes/go-pkg/log => ../log
 require (
 	github.com/Stoakes/go-pkg/log v0.4.0
 	github.com/Stoakes/go-pkg/types v0.0.3
-	github.com/hashicorp/hcl/v2 v2.9.0
+	github.com/alecthomas/hcl v0.1.9
 	github.com/mcuadros/go-defaults v1.1.1-0.20161116231230-e1c978be3307
 	github.com/pelletier/go-toml v1.4.0
 	github.com/spf13/cobra v1.0.0
