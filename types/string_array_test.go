@@ -118,9 +118,6 @@ func TestStringArray_Remove(t *testing.T) {
 }
 
 func TestStringArray_HasOneOf(t *testing.T) {
-	type args struct {
-		items []string
-	}
 	tests := []struct {
 		name string
 		s    StringArray

@@ -59,7 +59,7 @@ func (s *stateStore) addWatcher(host string, namespace string, port string) (cha
 		s.watchers[address] = append(s.watchers[address], newChannel)
 		return newChannel, nil
 	}
-	// the adress is not already watched, create the entry in the map
+	// the address is not already watched, create the entry in the map
 	newChannel := make(chan EndpointsState)
 	s.watchers[address] = [](chan EndpointsState){newChannel}
 	return newChannel, nil

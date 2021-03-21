@@ -52,6 +52,7 @@ func TestEDSOutputNoEndpoints(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error doing http request: %v", err)
 	}
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -92,6 +93,7 @@ func TestEDSOutputWithEndpoints(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error doing http request %v", err)
 	}
+	//nolint:errcheck
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {

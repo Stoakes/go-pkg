@@ -136,8 +136,8 @@ func newPilotClient(ctx context.Context, options PilotClientOptions) (*pilotClie
 	return pClient, nil
 }
 
-// AddWatch takes an adress, updates the subscription query and return a subscription channel where
-// updates on the adress will be sent. Get more details about EndpointsState in its documentation
+// AddWatch takes an address, updates the subscription query and return a subscription channel where
+// updates on the address will be sent. Get more details about EndpointsState in its documentation
 func (p *pilotClient) AddWatch(host string, namespace string, port string) (chan EndpointsState, error) {
 	req := &xdsapi.DiscoveryRequest{
 		Node:          p.node(),
@@ -160,11 +160,11 @@ func (p *pilotClient) AddWatch(host string, namespace string, port string) (chan
 func (p *pilotClient) Shutdown() {
 	p.shutdown.Store(true)
 	if p.pilotConn != nil {
-		p.pilotConn.Close()
+		_ = p.pilotConn.Close()
 		p.pilotConn = nil
 	}
 	p.subscriptions.clear()
-	p.pilotStream.CloseSend()
+	_ = p.pilotStream.CloseSend()
 }
 
 // RefreshFromRemote issue a request to pilot to get update for every internal subscription
@@ -192,7 +192,7 @@ func (p *pilotClient) node() *core1.Node {
 	}
 }
 
-// edszHandler is an http handler to expose the state of currenty known endpoints
+// edszHandler is an http handler to expose the state of currently known endpoints
 func (p *pilotClient) EdszHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 
@@ -239,14 +239,14 @@ func (p *pilotClient) connect(ctx context.Context) error {
 	return nil
 }
 
-// reconnct cleans current connection and try to re-open new ones + refresh state if it succeeds
+// reconnect cleans current connection and try to re-open new ones + refresh state if it succeeds
 func (p *pilotClient) reconnect(ctx context.Context, err error) {
 	p.connected.Store(false)
 	connectionErr := err
 	for connectionErr != nil {
 		// pilotClient.pilotStream = nil
 		if p.pilotConn != nil { // If connection is still opened, closing it
-			p.pilotConn.Close()
+			_ = p.pilotConn.Close()
 			p.pilotConn = nil
 		}
 		connectionErr = p.connect(ctx) // connection attempt
@@ -259,7 +259,10 @@ func (p *pilotClient) reconnect(ctx context.Context, err error) {
 		log.For(ctx).Infof("Reconnection succeeded after %d attempts", p.retryCounter.Load())
 		p.retryCounter.Store(0)
 		p.connected.Store(true)
-		p.RefreshFromRemote()
+		err := p.RefreshFromRemote()
+		if err != nil {
+			log.For(ctx).Error("Error refreshing from remote: " + err.Error())
+		}
 	}
 }
 

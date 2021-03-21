@@ -103,7 +103,10 @@ export TEST_REMOTE_USETLS="false"
 		b := bytes.NewBufferString("")
 		cmd.SetArgs(tc.args)
 		cmd.SetOut(b)
-		cmd.Execute()
+		err := cmd.Execute()
+		if err != nil {
+			t.Fatalf("Error running %s command: %s", tc.name, err.Error())
+		}
 		out, err := ioutil.ReadAll(b)
 		if err != nil {
 			t.Fatalf("Error reading new %s command output: %s", tc.name, err.Error())

@@ -33,12 +33,12 @@ import (
 
 // Options declares logger options for builder
 type Options struct {
-	Debug         bool
 	LogLevel      string
 	AppName       string
 	AppID         string
 	Version       string
 	Revision      string
+	Debug         bool
 	DisableFields bool
 }
 
