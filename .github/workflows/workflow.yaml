@@ -33,9 +33,19 @@ jobs:
       with:
         working-directory: ${{ matrix.folder }}
     - name: Coveralls
-      uses: coverallsapp/github-action@v1.1.2
+      uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.github_token }}
         path-to-lcov: ${{ matrix.folder }}/coverage.lcov
+        flag-name: run-${{ matrix.go-version }}-${{ matrix.folder }}
+        parallel: true
 
-
+  finish:
+    needs: lint_and_test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.github_token }}
+        parallel-finished: true
