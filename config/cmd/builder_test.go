@@ -7,7 +7,7 @@ import (
 )
 
 type ConfigurationYamlTest struct {
-	Mode  bool `yaml:"mode" toml:"mode" hcl:"mode" default:"local" comment:"Use remote or local as backend"`
+	Mode  bool `yaml:"mode" toml:"mode" hcl:"mode" default:"false" comment:"Use remote or local as backend"`
 	Local struct {
 		ConnectionString string `yaml:"connection_string" toml:"connection_string" hcl:"connection_string" default:"postgresql://user:password@localhost:5432/postgres" comment:"Database connection string"`
 	} `yaml:"Local" toml:"Local" hcl:"Local,block" comment:" Settings for local connection"`
