@@ -108,7 +108,7 @@ func (c *pilotWatcher) watch() {
 		case <-c.quit:
 			return
 		case endpoints := <-c.endpointsChan:
-			log.Bg().Debugf("Pilot listener reponse for %s: %v", c.target, endpoints)
+			log.Bg().Debugf("Pilot listener response for %s: %v", c.target, endpoints)
 			updates := []*naming.Update{}
 			for k := range c.addresses {
 				c.addresses[k] = false
