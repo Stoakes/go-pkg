@@ -6,7 +6,7 @@ import (
 
 // TeststateStore tests the subscription manager (the component storing internal subscriptions and known endpoints)
 // works as expected
-func TeststateStore(t *testing.T) {
+func TestStateStore(t *testing.T) {
 	subManager := newStateStore()
 
 	// We can't test if a lock is locked or not. So these 2 are mostly to improve coverage.
