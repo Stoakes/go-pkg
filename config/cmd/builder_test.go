@@ -13,7 +13,7 @@ type ConfigurationYamlTest struct {
 	} `yaml:"Local" toml:"Local" hcl:"Local,block" comment:" Settings for local connection"`
 	Remote struct {
 		Address string `yaml:"address" toml:"address" hcl:"address" default:"" comment:"Remote database connection string"`
-		UseTLS  bool   `yaml:"useTLS" toml:"useTLS" hcl:"useTLS" default:"false" comment:"Enable TLS listener"`
+		UseTLS  bool   `yaml:"useTLS" toml:"useTLS" hcl:"useTLS" default:"false" comment:"Enable TLS listener" help:"Enable TLS listener. help for HCL"`
 	} `hcl:"remote,block"`
 }
 
@@ -54,7 +54,8 @@ Local {
 
 remote {
   address = ""
-  useTLS  = false
+  // Enable TLS listener. help for HCL
+  useTLS = false
 }
 `
 
