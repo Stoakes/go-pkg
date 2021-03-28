@@ -15,7 +15,7 @@ import (
 
 // Load a config
 // Apply defaults first, then environment, then finally config file.
-func Load(conf interface{}, envPrefix string, cfgFile string) error {
+func Load(conf interface{}, envPrefix string, cfgFile string, opts ...viper.DecoderConfigOption) error {
 	// Apply defaults first
 	defaults.SetDefaults(conf)
 
@@ -49,7 +49,7 @@ func Load(conf interface{}, envPrefix string, cfgFile string) error {
 	}
 
 	// Update viper values
-	if err := viper.Unmarshal(conf); err != nil {
+	if err := viper.Unmarshal(conf, opts...); err != nil {
 		return fmt.Errorf("Unable to apply config '%s': %w", cfgFile, err)
 	}
 

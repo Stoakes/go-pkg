@@ -9,6 +9,7 @@ require (
 	github.com/Stoakes/go-pkg/types v0.0.3
 	github.com/alecthomas/hcl v0.1.8
 	github.com/mcuadros/go-defaults v1.1.1-0.20161116231230-e1c978be3307
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pelletier/go-toml v1.4.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.4.0
