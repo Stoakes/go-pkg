@@ -54,8 +54,10 @@ func (t *toolsServer) Start(ctx context.Context) error {
 	http.Handle("/metrics", promhttp.Handler())
 	http.Handle("/logz", t.zapLogLevel)
 	http.Handle("/info", versionHandler())
-	for url, handler := range *t.handlers {
-		http.Handle(url, handler)
+	if t.handlers != nil {
+		for url, handler := range *t.handlers {
+			http.Handle(url, handler)
+		}
 	}
 	t.server = &http.Server{
 		Addr:    ":" + strconv.Itoa(t.port),

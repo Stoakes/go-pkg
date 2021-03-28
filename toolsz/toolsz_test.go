@@ -12,6 +12,7 @@ import (
 
 	"github.com/Stoakes/go-pkg/log"
 	"github.com/Stoakes/go-pkg/toolsz"
+	"go.uber.org/zap"
 )
 
 func TestStart(t *testing.T) {
@@ -61,6 +62,33 @@ func TestStart(t *testing.T) {
 
 	cancel()
 
+}
+
+// TestStartNoLogLevel tests toolsz server when no zap atomic log level is provided
+func TestStartNoLogLevel(t *testing.T) {
+	http.DefaultServeMux = new(http.ServeMux)
+	port := 51545
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	toolServer := toolsz.New(port, zap.AtomicLevel{}, nil)
+	go func() {
+		err := toolServer.Start(ctx)
+		if err != nil {
+			t.Fatalf("Cannot start tools server: " + err.Error())
+		}
+	}()
+	time.Sleep(100 * time.Millisecond)
+	host := "http://localhost:" + strconv.Itoa(port)
+
+	/* Test GET /metrics */
+	body, err := testGet(host+"/metrics", http.StatusOK)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	if !strings.Contains(string(body), "goroutines") {
+		t.Errorf("Cannot find 'goroutines' in /metrics content")
+	}
+	cancel()
 }
 
 // testGet is a smaller helper to query an URL and return its content
